@@ -5,7 +5,7 @@ import { LogIn, ArrowLeft, Shield } from 'lucide-react';
 import { GameCard } from '../components/ui/GameCard';
 
 export function Login() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,9 +17,7 @@ export function Login() {
     setError('');
     setLoading(true);
 
-    // Convert username to email format for Supabase Auth
-    const email = `${username.trim().toLowerCase()}@blog.local`;
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(email.trim(), password);
     if (error) {
       setError(error.message || '登录失败，请检查账号密码');
       setLoading(false);
@@ -46,14 +44,14 @@ export function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-[var(--text-dim)] mb-1.5">用户名</label>
+              <label className="block text-sm font-medium text-[var(--text-dim)] mb-1.5">邮箱</label>
               <input
-                type="text"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-2.5 rounded-lg bg-[var(--surface2)] border border-[var(--border)] text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--primary)] focus:shadow-[var(--shadow-focus)] transition-all"
-                placeholder="Linqian007"
+                placeholder="admin@example.com"
               />
             </div>
 
