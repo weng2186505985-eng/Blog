@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { supabase } from '../../lib/supabase';
 import { GameCard } from '../../components/ui/GameCard';
 import { TagInput } from '../../components/ui/TagInput';
@@ -8,6 +9,7 @@ import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../contexts/ToastContext';
 import { Save, Upload, Trash2, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { stripMarkdown } from '../../utils/markdown';
 
 const RARITY_OPTIONS = [
   { value: 'common', label: 'Common', color: 'var(--common)' },
@@ -15,6 +17,7 @@ const RARITY_OPTIONS = [
   { value: 'epic', label: 'Epic', color: 'var(--epic)' },
   { value: 'legendary', label: 'Legendary', color: 'var(--legendary)' },
 ] as const;
+const EXP_MAPPING: Record<string, number> = { common: 50, rare: 100, epic: 200, legendary: 500 };
 
 type PostForm = {
   title: string;
@@ -99,19 +102,21 @@ export function PostEditor() {
     const payload = {
       title: form.title,
       content: form.content,
-      summary: form.content.slice(0, 100),
+      summary: stripMarkdown(form.content).slice(0, 100),
       tags: form.tags,
       rarity: form.rarity,
       published: publish,
       read_time: Math.max(1, Math.ceil(form.content.length / 500)),
     };
 
-    let error;
+    let error, data;
     if (isEdit) {
       ({ error } = await supabase.from('posts').update(payload).eq('id', id));
     } else {
-      ({ error } = await supabase.from('posts').insert(payload));
+      ({ data, error } = await supabase.from('posts').insert(payload).select('id').single());
     }
+    
+    const finalPostId = isEdit ? id : (data as any)?.id;
 
     setSaving(false);
 
@@ -119,6 +124,29 @@ export function PostEditor() {
       toast('保存失败：' + error.message, 'error');
     } else {
       localStorage.removeItem(DRAFT_KEY);
+      
+      // EXP Trigger for publishing
+      if (publish && finalPostId) {
+        const { data: userData } = await supabase.from('profiles').select('id').eq('is_admin', true).single();
+        if (userData) {
+          const expAmount = EXP_MAPPING[form.rarity] || 50;
+          const { data: levelData } = await supabase.rpc('add_exp_v2', {
+            target_user_id: userData.id,
+            src_type: 'post',
+            src_id: finalPostId,
+            src_title: form.title,
+            amount: expAmount
+          });
+          
+          if (levelData && levelData[0]) {
+            const { old_level, new_level } = levelData[0];
+            if (new_level > old_level) {
+              toast(`🎉 恭喜升级！Lv.${old_level} → Lv.${new_level}`, 'success');
+            }
+          }
+        }
+      }
+
       toast(publish ? '文章已发布 🎉' : '草稿已保存');
       navigate('/admin/posts');
     }
@@ -229,8 +257,8 @@ export function PostEditor() {
                   <span key={tag} className="text-xs px-2 py-0.5 rounded bg-[var(--surface3)] text-[var(--text-dim)]">#{tag}</span>
                 ))}
               </div>
-              <div className="prose dark:prose-invert prose-p:text-[var(--text-dim)] prose-headings:text-[var(--text)] prose-headings:font-serif prose-a:text-[var(--primary)] prose-code:text-[var(--accent)] prose-pre:bg-[var(--surface2)] prose-pre:border prose-pre:border-[var(--border)] max-w-none">
-                <ReactMarkdown>{form.content}</ReactMarkdown>
+              <div className="prose max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.content}</ReactMarkdown>
               </div>
             </div>
           ) : (

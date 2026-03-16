@@ -2,9 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { ExpBar } from '../components/ui/ExpBar';
 import { SlideAnim } from '../components/ui/Animations';
 import { motion } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
-const MOCK_SKILLS = [
-  // 术法之道 (Tech)
+// Skill Tree Layout defines the visual structure and connections.
+// Proficiency and categories are synchronized from the database.
+const SKILL_TREE_LAYOUT = [
   { id: 't1', x: 200, y: 50, name: '基础咒语 (HTML/CSS)', branch: 'tech', prof: 100, type: 'core', level: 0 },
   { id: 't2', x: 100, y: 150, name: 'UI 幻术 (Tailwind)', branch: 'tech', prof: 85, type: 'node', parent: 't1', level: 1 },
   { id: 't3', x: 300, y: 150, name: '逻辑构建 (JavaScript)', branch: 'tech', prof: 90, type: 'node', parent: 't1', level: 1 },
@@ -22,7 +24,30 @@ const MOCK_SKILLS = [
 
 export function Skills() {
   const [isReady, setIsReady] = useState(false);
+  const [skills, setSkills] = useState<any[]>(SKILL_TREE_LAYOUT);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function fetchSkills() {
+      const { data } = await supabase.from('skills').select('*');
+      if (data && data.length > 0) {
+        // Sync database proficiency and categories into the visual tree layout
+        const merged = SKILL_TREE_LAYOUT.map(ms => {
+          const dbSkill = data.find(ds => ds.name === ms.name || ds.id === ms.id);
+          if (dbSkill) {
+            return {
+              ...ms,
+              prof: dbSkill.proficiency ?? ms.prof,
+              branch: dbSkill.category ?? ms.branch
+            };
+          }
+          return ms;
+        });
+        setSkills(merged);
+      }
+    }
+    fetchSkills();
+  }, []);
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
@@ -41,9 +66,9 @@ export function Skills() {
   }, []);
 
   const renderLines = () => {
-    return MOCK_SKILLS.map(skill => {
+    return skills.map(skill => {
       if (!skill.parent) return null;
-      const parent = MOCK_SKILLS.find(s => s.id === skill.parent);
+      const parent = skills.find(s => s.id === skill.parent);
       if (!parent) return null;
       
       const color = skill.prof > 0 ? 'var(--border-bright)' : 'var(--border)';
@@ -70,7 +95,7 @@ export function Skills() {
   };
 
   const renderNodes = () => {
-    return MOCK_SKILLS.map(skill => {
+    return skills.map(skill => {
       const isTech = skill.branch === 'tech';
       const textClass = isTech ? 'text-game-primary' : 'text-game-accent';
       const isUnlocked = skill.prof > 0;
@@ -117,23 +142,23 @@ export function Skills() {
       <SlideAnim direction="up" delay={100}>
         <header className="text-center mb-12">
           <h1 className="text-3xl font-serif text-game-text font-bold mb-4">
-            技能树系统 (Skill Matrix)
+            技能树系统
           </h1>
           <div className="flex justify-center gap-8 mt-4 font-mono text-sm">
             <span className="text-game-primary flex items-center gap-2">
               <span className="w-3 h-3 bg-game-primary rounded-sm shadow-glow-primary"></span>
-              术法之道 (Tech)
+              术法之道
             </span>
             <span className="text-game-accent flex items-center gap-2">
               <span className="w-3 h-3 bg-game-accent rounded-sm shadow-glow-accent"></span>
-              创世之道 (Creative)
+              创世之道
             </span>
           </div>
         </header>
       </SlideAnim>
 
-      <div className="relative w-full overflow-x-auto min-h-[600px] flex justify-center bg-[var(--surface2)] border border-[var(--border)] rounded-xl mt-8">
-        <div ref={containerRef} className="relative w-[800px] h-[600px] flex-shrink-0 my-8">
+      <div className="relative w-full overflow-x-auto min-h-[500px] flex md:justify-center bg-[var(--surface2)] border border-[var(--border)] rounded-xl mt-8 touch-pan-x cursor-grab active:cursor-grabbing scrollbar-hide">
+        <div ref={containerRef} className="relative w-[800px] h-[600px] flex-shrink-0 my-4 mx-4">
           {isReady && (
             <>
               {/* SVG Canvas for Lines */}

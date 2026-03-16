@@ -66,7 +66,7 @@ export function Achievements() {
       <SlideAnim direction="up" delay={100}>
         <header className="text-center mb-12">
           <h1 className="text-3xl font-serif text-game-gold font-bold mb-4 drop-shadow-[0_0_10px_var(--gold)]">
-            成就荣誉墙 (Achievement Wall)
+            成就荣誉墙
           </h1>
           <p className="text-game-textDim">记录你在代码世界的每一次闪耀时刻。</p>
         </header>

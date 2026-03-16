@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { SlideAnim, ViewportAnim } from '../components/ui/Animations';
 import { motion } from 'framer-motion';
 import { supabase, type Profile, type Post, type Quest } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 const statsData = [
   { subject: '编程力', A: 90, fullMark: 100 },
@@ -24,11 +25,17 @@ export function Home() {
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
   const [activeQuests, setActiveQuests] = useState<Quest[]>([]);
 
+  const { profile: authProfile } = useAuth();
+
   useEffect(() => {
-    // Fetch profile (first admin or first user)
-    supabase.from('profiles').select('*').eq('is_admin', true).limit(1).single().then(({ data }) => {
-      if (data) setProfile(data);
-    });
+    // If not logged in, fetch the main admin profile to show on the public home page
+    if (!authProfile) {
+      supabase.from('profiles').select('*').eq('is_admin', true).limit(1).single().then(({ data }) => {
+        if (data) setProfile(data);
+      });
+    } else {
+      setProfile(authProfile);
+    }
 
     // Fetch 2 recent published posts
     supabase.from('posts').select('*').eq('published', true).order('created_at', { ascending: false }).limit(2).then(({ data }) => {
@@ -53,12 +60,14 @@ export function Home() {
     return () => observer.disconnect();
   }, []);
 
-  const username = profile?.username || 'Linqian007';
-  const level = profile?.level || 1;
-  const exp = profile?.exp || 0;
-  const title = profile?.title || '学徒';
-  // EXP to next level: level * 100 + 200
-  const maxExp = level * 100 + 200;
+  const totalExp = profile?.exp || 0;
+  // Derived level from exp to ensure consistency with the formula L = floor(sqrt(EXP/100))
+  const level = Math.floor(Math.sqrt(totalExp / 100));
+  const username = profile?.username || '';
+  const title = profile?.title || '';
+  
+  // Required EXP for level L: L^2 * 100
+  const nextLevelMinExp = Math.pow(level + 1, 2) * 100;
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -70,7 +79,7 @@ export function Home() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-8 md:pb-0">
       {/* Left Column - Profile & Stats */}
       <div className="lg:col-span-1 space-y-6">
         <SlideAnim direction="left" delay={100}>
@@ -88,7 +97,7 @@ export function Home() {
           <h2 className="text-xl font-bold text-game-text">{username}</h2>
           <p className="text-game-primary font-mono text-sm mb-4">职业：代码术士 / 称号：{title}</p>
 
-            <ExpBar current={exp} max={maxExp} label="EXP" />
+            <ExpBar current={totalExp} max={nextLevelMinExp} label="EXP" />
           </GameCard>
         </SlideAnim>
 
@@ -127,11 +136,11 @@ export function Home() {
             <div className="flex justify-between items-center mb-4">
             <h3 className="font-serif font-bold text-xl text-game-text flex items-center gap-2">
               <span className="w-1 h-5 bg-game-primary rounded-full inline-block"></span>
-              当前悬赏 (Quests)
+              当前悬赏
             </h3>
             <Link to="/quests" className="text-sm text-game-primary hover:text-game-accent transition-colors">查看全部 &raquo;</Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-[24px]">
             {activeQuests.length > 0 ? activeQuests.map(quest => (
               <GameCard key={quest.id}>
                 <div className="flex justify-between items-start mb-2">
@@ -165,7 +174,7 @@ export function Home() {
             <div className="flex justify-between items-center mb-4 mt-8">
               <h3 className="font-serif text-xl text-game-text flex items-center gap-2 font-bold">
                 <span className="w-1 h-5 bg-game-rarity-epic rounded-full inline-block"></span>
-                最新冒险日志 (Logs)
+                最新冒险日志
               </h3>
               <Link to="/blog" className="text-sm text-game-primary hover:text-game-accent transition-colors">开启阅读 &raquo;</Link>
             </div>

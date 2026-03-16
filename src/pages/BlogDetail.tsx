@@ -1,70 +1,118 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { GameCard } from '../components/ui/GameCard';
 import { ArrowLeft, MessageSquare, Send, Diamond } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase, type Post } from '../lib/supabase';
+import { useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
-const MOCK_ARTICLE = {
-  id: 1,
-  title: '探索 React 19 新特性',
-  rarity: 'epic',
-  time: '2023-10-24',
-  likes: 120,
-  content: `
-# 引言 (Introduction)
-
-React 19 带来了许多令人兴奋的特性，作为一名**代码术士**，掌握这些新魔法是必须的。
-
-## 1. Concurrent Rendering
-
-并发渲染允许 React 暂停某些渲染工作去处理更紧急的交互任务。这就好比在战斗中可以灵活分配注意力一样：
-* \`useTransition\`
-* \`useDeferredValue\`
-
-## 2. Server Components
-
-直接在服务器施展魔法，减少传送给客户端的魔力消耗（Bundle size）。
-
-\`\`\`javascript
-export default async function Page() {
-  const data = await fetchSpellData();
-  return <div>{data.spellName}</div>;
-}
-\`\`\`
-
-> "优秀的术士总是懂得如何优化魔力流转。"
-  `,
+// Fallback mock article for development or missing data
+const DEFAULT_ARTICLE: Partial<Post> = {
+  title: '',
+  rarity: 'common' as const,
+  created_at: '',
+  content: '',
 };
-
-const MOCK_COMMENTS = [
-  { id: 1, user: '游侠小明', level: 12, content: '这篇日志太有用了！', time: '2小时前' },
-  { id: 2, user: '法师艾米', level: 25, content: 'Server Components 的确是质的飞跃。', time: '5小时前' }
-];
 
 export function BlogDetail() {
   const { id } = useParams();
-  const [likes, setLikes] = useState(MOCK_ARTICLE.likes);
+  const { user } = useAuth();
+  const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<any[]>([]);
+  const [likes, setLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
-  const [comment, setComment] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const [loading, setLoading] = useState(true);
   const [likeEffects, setLikeEffects] = useState<{ id: number; x: number; y: number }[]>([]);
 
-  const handleLike = (e: React.MouseEvent) => {
+  useEffect(() => {
+    async function fetchPostAndComments() {
+      if (!id) return;
+      setLoading(true);
+
+      const [postRes, likesRes, commentsRes] = await Promise.all([
+        supabase.from('posts').select('*').eq('id', id).single(),
+        supabase.from('likes').select('id', { count: 'exact' }).eq('post_id', id),
+        supabase.from('comments').select('*, profiles(*)').eq('post_id', id).order('created_at', { ascending: true })
+      ]);
+
+      if (postRes.data) {
+        setPost(postRes.data);
+      }
+      if (likesRes.count !== null) {
+        setLikes(likesRes.count);
+      }
+      if (commentsRes.data) {
+        setComments(commentsRes.data.map(c => ({
+          id: c.id,
+          user: c.profiles?.username || '神秘旅者',
+          level: c.profiles?.level || 1,
+          content: c.content,
+          time: new Date(c.created_at).toLocaleDateString()
+        })));
+      }
+
+      // Check if current user liked
+      if (user) {
+        const { count } = await supabase.from('likes').select('id', { count: 'exact', head: true }).eq('post_id', id).eq('user_id', user.id);
+        setHasLiked(!!count);
+      }
+
+      setLoading(false);
+    }
+    fetchPostAndComments();
+  }, [id, user]);
+
+  const handleLike = async (e: React.MouseEvent) => {
+    if (!id || !user || hasLiked) return;
+
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (!hasLiked) {
-      setLikes(likes + 1);
+    const { error } = await supabase.from('likes').insert({ post_id: id, user_id: user.id });
+    
+    if (!error) {
+      setLikes(prev => prev + 1);
       setHasLiked(true);
 
       const newEffect = { id: Date.now(), x, y };
       setLikeEffects(prev => [...prev, newEffect]);
       setTimeout(() => {
         setLikeEffects(prev => prev.filter(effect => effect.id !== newEffect.id));
-      }, 1000); // Remove after animation
+      }, 1000);
     }
   };
+
+  const handleSendComment = async () => {
+    if (!id || !user || !commentText.trim()) return;
+
+    const { data, error } = await supabase.from('comments').insert({
+      post_id: id,
+      user_id: user.id,
+      content: commentText.trim()
+    }).select('*, profiles(*)').single();
+
+    if (!error && data) {
+      setComments(prev => [...prev, {
+        id: data.id,
+        user: data.profiles?.username || '我',
+        level: data.profiles?.level || 1,
+        content: data.content,
+        time: '刚刚'
+      }]);
+      setCommentText('');
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-20 font-mono animate-pulse">正在解读上古卷轴...</div>;
+  }
+
+  const displayPost = post || { ...DEFAULT_ARTICLE, title: '未知卷轴', rarity: 'common' as const };
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8">
@@ -74,27 +122,27 @@ export function BlogDetail() {
           <ArrowLeft size={16} className="mr-1" /> 返回日志列表
         </Link>
 
-        <GameCard rarity={MOCK_ARTICLE.rarity as any} hoverable={false} className="p-8">
+        <GameCard rarity={displayPost.rarity as any} hoverable={false} className="p-8">
           <header className="mb-8 border-b border-[var(--border)] pb-6">
             <div className="flex justify-between items-start mb-4">
               <h1 className="text-3xl md:text-4xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-game-text to-game-textMuted">
-                {MOCK_ARTICLE.title} {id && <span className="text-[var(--text-muted)] text-lg">#{id}</span>}
+                {displayPost.title}
               </h1>
               <span className={`text-xs px-2 py-1 rounded capitalize border hidden md:block
-                  ${MOCK_ARTICLE.rarity === 'epic' ? 'bg-[var(--tag-epic-bg)] text-[var(--tag-epic-text)] border-[var(--tag-epic-border)]' : ''}
+                  ${displayPost.rarity === 'epic' ? 'bg-[var(--tag-epic-bg)] text-[var(--tag-epic-text)] border-[var(--tag-epic-border)]' : ''}
                 `}>
-                {MOCK_ARTICLE.rarity}
+                {displayPost.rarity}
               </span>
             </div>
             <div className="flex gap-4 text-sm text-[var(--text-dim)] font-mono">
-              <span>📅 发布于: {MOCK_ARTICLE.time}</span>
+              <span>📅 发布于: {displayPost.created_at ? new Date(displayPost.created_at).toLocaleDateString() : ''}</span>
               <span>💎 获得水晶: {likes}</span>
             </div>
           </header>
 
           {/* Markdown Content */}
-          <div className="prose dark:prose-invert prose-p:text-[var(--text-dim)] prose-headings:text-game-text prose-headings:font-serif prose-a:text-game-primary hover:prose-a:text-game-accent prose-code:text-game-accent prose-pre:bg-[var(--surface2)] prose-pre:border prose-pre:border-[var(--border)] max-w-none mb-10">
-            <ReactMarkdown>{MOCK_ARTICLE.content}</ReactMarkdown>
+          <div className="prose max-w-none mb-10">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayPost.content}</ReactMarkdown>
           </div>
 
           {/* Action Area */}
@@ -142,18 +190,25 @@ export function BlogDetail() {
           <GameCard className="p-4">
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full bg-[var(--surface2)] border border-[var(--border)] flex items-center justify-center shrink-0">
-                👤
+                {user ? (
+                  <img src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email}`} className="w-full h-full rounded-full" alt="Avatar" />
+                ) : '👤'}
               </div>
               <div className="flex-1 right-0">
                 <textarea
                   rows={3}
-                  placeholder="留下你的冒险心语..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded pt-2 px-3 text-sm focus:outline-none focus:border-game-primary resize-none placeholder-[var(--text-muted)] text-[var(--text)]"
+                  placeholder={user ? "留下你的冒险心语..." : "请先登录后再留言..."}
+                  disabled={!user}
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded pt-2 px-3 text-sm focus:outline-none focus:border-game-primary resize-none placeholder-[var(--text-muted)] text-[var(--text)] disabled:opacity-50"
                 ></textarea>
                 <div className="flex justify-end mt-2">
-                  <button className="bg-game-primary hover:bg-game-primary/80 text-white px-4 py-1.5 rounded text-sm flex items-center gap-2 transition-colors">
+                  <button 
+                    onClick={handleSendComment}
+                    disabled={!user || !commentText.trim()}
+                    className="explicit-action bg-game-primary hover:bg-game-primary/80 text-white px-4 py-1.5 rounded text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+                  >
                     <Send size={14} /> 施放留言
                   </button>
                 </div>
@@ -163,7 +218,7 @@ export function BlogDetail() {
 
           <div className="space-y-3 mt-6">
             <AnimatePresence>
-              {MOCK_COMMENTS.map((c, index) => (
+              {comments.map((c, index) => (
                 <motion.div
                   key={c.id}
                   initial={{ opacity: 0, y: 20 }}

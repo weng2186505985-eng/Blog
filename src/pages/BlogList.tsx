@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Search, Filter } from 'lucide-react';
 import { ViewportAnim, SlideAnim } from '../components/ui/Animations';
 import { supabase, type Post } from '../lib/supabase';
+import { getPostExcerpt } from '../utils/markdown';
 
 type PostWithLikes = Post & { likes_count: number };
 
@@ -64,9 +65,8 @@ export function BlogList() {
     <div className="max-w-4xl mx-auto space-y-8">
       <SlideAnim direction="up" delay={100}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h1 className="text-3xl font-serif text-game-primary font-bold flex items-center gap-2">
-            <span className="w-1.5 h-8 bg-game-primary inline-block rounded-full shadow-glow-primary"></span>
-            冒险日志 (Quest Logs)
+          <h1 className="text-3xl font-serif text-game-primary font-bold">
+            冒险日志
           </h1>
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-game-textMuted" size={18} />
@@ -88,7 +88,7 @@ export function BlogList() {
             onClick={() => setActiveTag(null)}
             className={`px-3 py-1 text-xs rounded-full border transition-all ${!activeTag ? 'bg-game-primary/20 border-game-primary text-game-primary shadow-glow-primary' : 'border-game-border text-game-textDim hover:border-game-borderBright hover:text-game-text'}`}
           >
-            全部 (All)
+            全部
           </button>
           {allTags.map(tag => (
             <button
@@ -134,7 +134,7 @@ export function BlogList() {
 
                 <div className="relative z-10">
                   <p className="text-game-textDim text-sm mb-4 line-clamp-2 leading-relaxed ml-2">
-                    {post.summary}
+                    {getPostExcerpt(post)}
                   </p>
                   <div className="flex flex-wrap justify-between items-center text-xs text-game-textMuted font-mono ml-2">
                     <div className="flex gap-2">

@@ -34,22 +34,90 @@ export function QuestManager() {
   const openEdit = (q: Quest) => { setEditing(q.id); setForm({ title: q.title, description: q.description, type: q.type, status: q.status, difficulty: q.difficulty, reward_exp: q.reward_exp, start_date: q.start_date || '', end_date: q.end_date || '' }); setShowForm(true); };
 
   const handleSave = async () => {
-    if (!form.title.trim()) { toast('请填写任务名称', 'error'); return; }
-    if (editing) {
-      setQuests(prev => prev.map(q => q.id === editing ? { ...q, ...form } : q));
-      await supabase.from('quests').update(form).eq('id', editing);
-      toast('任务已更新');
-    } else {
-      setQuests(prev => [{ ...form, id: 'temp-' + Date.now() } as Quest, ...prev]);
-      await supabase.from('quests').insert(form);
-      toast('任务已创建');
+    if (!form.title.trim()) {
+      toast('请填写任务名称', 'error');
+      return;
     }
-    setShowForm(false);
+
+    // Convert empty strings to null for date fields to avoid DB errors
+    const saveForm = {
+      ...form,
+      start_date: form.start_date || null,
+      end_date: form.end_date || null,
+    };
+
+    try {
+      let levelData = null;
+      let userData = null;
+
+      if (editing) {
+        const oldQuest = quests.find(q => q.id === editing);
+        const { error } = await supabase.from('quests').update(saveForm).eq('id', editing);
+        if (error) throw error;
+        
+        // EXP Rollback/Gain logic
+        if (oldQuest && oldQuest.status !== saveForm.status) {
+          const { data } = await supabase.from('profiles').select('id').eq('is_admin', true).single();
+          userData = data;
+          if (userData) {
+            if (saveForm.status === 'completed') {
+              ({ data: levelData } = await supabase.rpc('add_exp_v2', { target_user_id: userData.id, src_type: 'quest', src_id: editing, src_title: saveForm.title, amount: saveForm.reward_exp }));
+            } else if (oldQuest.status === 'completed') {
+              ({ data: levelData } = await supabase.rpc('revoke_exp_v2', { target_user_id: userData.id, src_type: 'quest', src_id: editing }));
+            }
+          }
+        }
+
+        setQuests(prev => prev.map(q => q.id === editing ? { ...q, ...saveForm } as Quest : q));
+        toast('任务已更新');
+      } else {
+        const { data, error } = await supabase.from('quests').insert(saveForm).select().single();
+        if (error) throw error;
+        
+        if (data) {
+          setQuests(prev => [data, ...prev]);
+          if (saveForm.status === 'completed') {
+            const { data: uData } = await supabase.from('profiles').select('id').eq('is_admin', true).single();
+            if (uData) {
+              ({ data: levelData } = await supabase.rpc('add_exp_v2', { target_user_id: uData.id, src_type: 'quest', src_id: data.id, src_title: saveForm.title, amount: saveForm.reward_exp }));
+            }
+          }
+        }
+        toast('任务已创建');
+      }
+
+      if (levelData && levelData[0]) {
+        const { old_level, new_level } = levelData[0];
+        if (new_level > old_level) toast(`🎉 恭喜升级！Lv.${old_level} → Lv.${new_level}`, 'success');
+        else if (new_level < old_level) toast(`📉 等级下降至 Lv.${new_level}`, 'error');
+      }
+
+      setShowForm(false);
+    } catch (error: any) {
+      console.error('Failed to save quest:', error);
+      toast(error.message || '保存失败，请稍后重试', 'error');
+    }
   };
 
   const quickComplete = async (q: Quest) => {
     setQuests(prev => prev.map(x => x.id === q.id ? { ...x, status: 'completed' as const } : x));
     await supabase.from('quests').update({ status: 'completed', end_date: new Date().toISOString() }).eq('id', q.id);
+    
+    const { data: userData } = await supabase.from('profiles').select('id').eq('is_admin', true).single();
+    if (userData) {
+      const { data: levelData } = await supabase.rpc('add_exp_v2', {
+        target_user_id: userData.id,
+        src_type: 'quest',
+        src_id: q.id,
+        src_title: q.title,
+        amount: q.reward_exp
+      });
+      if (levelData && levelData[0]) {
+        const { old_level, new_level } = levelData[0];
+        if (new_level > old_level) toast(`🎉 恭喜升级！Lv.${old_level} → Lv.${new_level}`, 'success');
+      }
+    }
+    
     toast(`任务完成！获得 ${q.reward_exp} EXP 🎉`);
   };
 
@@ -92,6 +160,16 @@ export function QuestManager() {
             <div>
               <label className="block text-xs text-[var(--text-dim)] mb-1">奖励 EXP</label>
               <input type="number" value={form.reward_exp} onChange={e => setForm(f => ({ ...f, reward_exp: Number(e.target.value) }))} className="w-full px-3 py-2 rounded-lg bg-[var(--surface2)] border border-[var(--border)] text-sm text-[var(--text)] outline-none focus:border-[var(--primary)]" />
+            </div>
+            <div>
+              <label className="block text-xs text-[var(--text-dim)] mb-1">任务类型</label>
+              <div className="flex gap-2">
+                {(['main', 'side'] as const).map(t => (
+                  <button key={t} onClick={() => setForm(f => ({ ...f, type: t }))} className={`px-3 py-1 text-xs rounded-lg border ${form.type === t ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'border-[var(--border)] text-[var(--text-dim)]'}`}>
+                    {t === 'main' ? '主线任务' : '支线任务'}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="md:col-span-2">
               <label className="block text-xs text-[var(--text-dim)] mb-1">描述</label>

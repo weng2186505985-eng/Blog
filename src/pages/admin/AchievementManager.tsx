@@ -4,11 +4,13 @@ import { GameCard } from '../../components/ui/GameCard';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { useToast } from '../../contexts/ToastContext';
 import { CardSkeleton } from '../../components/ui/Skeleton';
-import { Plus, Lock, Unlock, X } from 'lucide-react';
+import { Plus, Lock, Unlock, X, Trash2 } from 'lucide-react';
+import { EmojiPicker } from '../../components/ui/EmojiPicker';
 
 
 const RARITY_OPTIONS = ['bronze', 'silver', 'gold', 'legend'] as const;
 const rarityLabel: Record<string, string> = { bronze: '铜', silver: '银', gold: '金', legend: '传说' };
+const EXP_MAPPING: Record<string, number> = { bronze: 50, silver: 100, gold: 200, legend: 500 };
 
 type FormData = { title: string; description: string; icon: string; rarity: string; unlock_condition: string; reward_exp: number; };
 const emptyForm: FormData = { title: '', description: '', icon: '🏆', rarity: 'bronze', unlock_condition: '', reward_exp: 50 };
@@ -18,7 +20,7 @@ export function AchievementManager() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormData>(emptyForm);
-  const [confirmTarget, setConfirmTarget] = useState<{ ach: Achievement; action: 'unlock' | 'revoke' } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{ ach: Achievement; action: 'unlock' | 'revoke' | 'delete' } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,6 +37,25 @@ export function AchievementManager() {
     setAchievements(prev => prev.map(a => a.id === ach.id ? { ...a, is_unlocked: newState, unlocked_at: newState ? new Date().toISOString() : '' } : a));
     setConfirmTarget(null);
     await supabase.from('achievements').update({ is_unlocked: newState, unlocked_at: newState ? new Date().toISOString() : null }).eq('id', ach.id);
+    
+    // EXP Trigger
+    const { data: userData } = await supabase.from('profiles').select('id').eq('is_admin', true).single();
+    if (userData) {
+      const expAmount = EXP_MAPPING[ach.rarity] || 50;
+      let levelData = null;
+      if (newState) {
+        ({ data: levelData } = await supabase.rpc('add_exp_v2', { target_user_id: userData.id, src_type: 'achievement', src_id: ach.id, src_title: ach.title, amount: expAmount }));
+      } else {
+        ({ data: levelData } = await supabase.rpc('revoke_exp_v2', { target_user_id: userData.id, src_type: 'achievement', src_id: ach.id }));
+      }
+
+      if (levelData && levelData[0]) {
+        const { old_level, new_level } = levelData[0];
+        if (new_level > old_level) toast(`🎉 恭喜升级！Lv.${old_level} → Lv.${new_level}`, 'success');
+        else if (new_level < old_level) toast(`📉 等级下降至 Lv.${new_level}`, 'error');
+      }
+    }
+
     toast(newState ? `已解锁「${ach.title}」🎉` : `已撤销「${ach.title}」`);
   };
 
@@ -46,6 +67,23 @@ export function AchievementManager() {
     setForm(emptyForm);
     await supabase.from('achievements').insert({ title: form.title, description: form.description, icon: form.icon, rarity: form.rarity, unlock_condition: form.unlock_condition, is_unlocked: false });
     toast('成就已创建');
+  };
+
+  const handleDelete = async () => {
+    if (!confirmTarget || confirmTarget.action !== 'delete') return;
+    const { ach } = confirmTarget;
+    
+    setAchievements(prev => prev.filter(a => a.id !== ach.id));
+    setConfirmTarget(null);
+
+    const { error } = await supabase.from('achievements').delete().eq('id', ach.id);
+    if (error) {
+      toast('删除失败: ' + error.message, 'error');
+      const { data } = await supabase.from('achievements').select('*').order('rarity');
+      if (data) setAchievements(data);
+    } else {
+      toast(`成就「${ach.title}」已删除`);
+    }
   };
 
   const getRarityStyle = (rarity: string) => {
@@ -80,7 +118,10 @@ export function AchievementManager() {
             </div>
             <div>
               <label className="block text-xs text-[var(--text-dim)] mb-1">图标 (emoji)</label>
-              <input value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} className="w-full px-3 py-2 rounded-lg bg-[var(--surface2)] border border-[var(--border)] text-sm text-[var(--text)] outline-none focus:border-[var(--primary)]" />
+              <EmojiPicker 
+                value={form.icon} 
+                onChange={emoji => setForm(f => ({ ...f, icon: emoji }))} 
+              />
             </div>
             <div className="md:col-span-2">
               <label className="block text-xs text-[var(--text-dim)] mb-1">描述</label>
@@ -119,7 +160,7 @@ export function AchievementManager() {
             <h3 className={`font-bold text-sm mb-1 ${ach.is_unlocked ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>{ach.is_unlocked ? ach.title : '???'}</h3>
             <p className="text-xs text-[var(--text-dim)] mb-3">{ach.description}</p>
             <span className={`inline-block text-xs px-2 py-0.5 rounded border mb-3 ${getRarityStyle(ach.rarity)}`}>{rarityLabel[ach.rarity]}</span>
-            <div className="mt-2">
+            <div className="mt-4 flex flex-col gap-2">
               {ach.is_unlocked ? (
                 <button onClick={() => setConfirmTarget({ ach, action: 'revoke' })} className="flex items-center gap-1 mx-auto text-xs px-3 py-1 rounded border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all">
                   <Lock size={12} /> 撤销解锁
@@ -129,6 +170,12 @@ export function AchievementManager() {
                   <Unlock size={12} /> 手动解锁
                 </button>
               )}
+              <button 
+                onClick={() => setConfirmTarget({ ach, action: 'delete' })} 
+                className="flex items-center gap-1 mx-auto text-[10px] text-[var(--text-muted)] hover:text-red-500 transition-colors"
+              >
+                <Trash2 size={10} /> 删除成就
+              </button>
             </div>
           </GameCard>
         ))}
@@ -136,11 +183,11 @@ export function AchievementManager() {
 
       <ConfirmDialog
         open={!!confirmTarget}
-        title={confirmTarget?.action === 'unlock' ? '解锁成就' : '撤销解锁'}
-        message={confirmTarget?.action === 'unlock' ? `确认解锁「${confirmTarget?.ach.title}」？` : `确认撤销「${confirmTarget?.ach.title}」的解锁状态？`}
-        confirmText="确认"
-        danger={confirmTarget?.action === 'revoke'}
-        onConfirm={handleToggleUnlock}
+        title={confirmTarget?.action === 'delete' ? '删除成就' : confirmTarget?.action === 'unlock' ? '解锁成就' : '撤销解锁'}
+        message={confirmTarget?.action === 'delete' ? `确认彻底删除成就「${confirmTarget?.ach.title}」吗？此操作不可撤销。` : confirmTarget?.action === 'unlock' ? `确认解锁「${confirmTarget?.ach.title}」？` : `确认撤销「${confirmTarget?.ach.title}」的解锁状态？`}
+        confirmText={confirmTarget?.action === 'delete' ? '确认删除' : '确认'}
+        danger={confirmTarget?.action === 'delete' || confirmTarget?.action === 'revoke'}
+        onConfirm={confirmTarget?.action === 'delete' ? handleDelete : handleToggleUnlock}
         onCancel={() => setConfirmTarget(null)}
       />
     </div>
