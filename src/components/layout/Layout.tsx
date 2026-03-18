@@ -101,7 +101,7 @@ export function Layout() {
               <div className="relative group/admin">
                 <Link 
                   to="/admin/dashboard"
-                  className="flex items-center justify-center w-[24px] h-[24px] md:w-[28px] md:h-[28px] rounded-full bg-gradient-to-br from-game-primary to-[#8b5cf6] shadow-glow-primary transition-all duration-300 hover:rotate-90 hover:scale-110"
+                  className="flex items-center justify-center w-[24px] h-[24px] md:w-[28px] md:h-[28px] rounded-full bg-gradient-to-br from-[#2ab8b0] to-[#f0a500] shadow-glow-primary transition-all duration-300 hover:rotate-90 hover:scale-110"
                 >
                   <Settings size={12} className="text-white" />
                 </Link>
@@ -243,7 +243,7 @@ export function Layout() {
       {/* Footer */}
       <footer className="hidden md:block w-full border-t border-game-border py-6 mt-12 bg-game-panel/50 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 text-center text-sm text-game-textMuted font-mono">
-          <p>System Version 1.0.0 // Player: {displayProfile.username} // Status: ONLINE</p>
+          <p>风吹过夏伍风屿 · 每一天都算数 // 守岛人：{displayProfile.username}</p>
         </div>
       </footer>
 

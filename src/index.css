@@ -5,130 +5,98 @@
 @tailwind utilities;
 
 :root {
-  /* 背景层次 */
-  --bg:        #f0f4ff;   /* 页面底色：冷调浅蓝白 */
-  --surface:   #ffffff;   /* 卡片主背景 */
-  --surface2:  #f8faff;   /* 卡片悬停/内嵌背景 */
-  --surface3:  #eef1ff;   /* 标签/输入框背景 */
+  --bg:           #f0f9f8;
+  --surface:      #ffffff;
+  --surface2:     #f0fafa;
+  --surface3:     #e0f5f3;
+  --border:       rgba(32,178,170,0.15);
+  --border-bright:rgba(32,178,170,0.40);
+  --primary:      #2ab8b0;
+  --primary-glow: rgba(42,184,176,0.15);
+  --accent:       #f0a500;
+  --accent-glow:  rgba(240,165,0,0.15);
+  --gold:         #f0a500;
+  --text:         #1a3a3a;
+  --text-dim:     #4a7c7c;
+  --text-muted:   #8ab8b8;
+  --shadow-sm:    0 1px 4px rgba(42,184,176,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow:       0 4px 16px rgba(42,184,176,0.12), 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-hover: 0 8px 32px rgba(42,184,176,0.20), 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-focus: 0 0 0 3px rgba(42,184,176,0.20);
+  --nav-bg:       rgba(255,255,255,0.88);
+  --common:       #64748b;
+  --rare:         #2ab8b0;
+  --epic:         #7c4daa;
+  --legendary:    #f0a500;
 
-  /* 边框 */
-  --border:        rgba(99,102,241,0.12);
-  --border-bright: rgba(99,102,241,0.4);
-
-  /* 主色调（不变）*/
-  --primary:      #6366f1;
-  --primary-glow: rgba(99,102,241,0.12);
-  --accent:       #059669;   /* 浅色模式青绿稍深，更易读 */
-  --accent-glow:  rgba(5,150,105,0.12);
-  --gold:         #d97706;   /* 金色稍深，白底更清晰 */
-
-  /* 文字 */
-  --text:       #1e293b;   /* 深蓝黑，主文字 */
-  --text-dim:   #475569;   /* 次要文字 — 加深，白底可读 */
-  --text-muted: #64748b;   /* 占位/时间戳 — 加深 */
-
-  /* 阴影（替代深色模式的发光效果）*/
-  --shadow-sm:    0 1px 4px rgba(99,102,241,0.06),
-                  0 1px 2px rgba(0,0,0,0.04);
-  --shadow:       0 4px 16px rgba(99,102,241,0.10),
-                  0 1px 4px rgba(0,0,0,0.06);
-  --shadow-hover: 0 8px 32px rgba(99,102,241,0.16),
-                  0 2px 8px rgba(0,0,0,0.08);
-  --shadow-focus: 0 0 0 3px rgba(99,102,241,0.20);
-
-  /* 导航栏 */
-  --nav-bg: rgba(255,255,255,0.85);
-
-  /* 稀有度颜色（浅色模式下加深，保证可读性）*/
-  --common:    #64748b;
-  --rare:      #16a34a;
-  --epic:      #9333ea;
-  --legendary: #d97706;
-
-  /* Tag Types for Light Mode */
-  --tag-common-bg: #f1f5f9;
-  --tag-common-text: #64748b;
+  /* 标签颜色同步更新 */
+  --tag-common-bg:     #f1f5f9;
+  --tag-common-text:   #64748b;
   --tag-common-border: #e2e8f0;
+  --tag-rare-bg:       #e0f5f3;
+  --tag-rare-text:     #2ab8b0;
+  --tag-rare-border:   #a0e0dc;
+  --tag-epic-bg:       #f3eeff;
+  --tag-epic-text:     #7c4daa;
+  --tag-epic-border:   #d8b4fe;
+  --tag-legendary-bg:  #fffbeb;
+  --tag-legendary-text:#f0a500;
+  --tag-legendary-border:#fde68a;
+  --tag-main-bg:       #e0f5f3;
+  --tag-main-text:     #2ab8b0;
+  --tag-main-border:   #a0e0dc;
+  --tag-side-bg:       #fffbeb;
+  --tag-side-text:     #f0a500;
+  --tag-side-border:   #fde68a;
 
-  --tag-rare-bg: #f0fdf4;
-  --tag-rare-text: #16a34a;
-  --tag-rare-border: #bbf7d0;
-
-  --tag-epic-bg: #faf5ff;
-  --tag-epic-text: #9333ea;
-  --tag-epic-border: #e9d5ff;
-
-  --tag-legendary-bg: #fffbeb;
-  --tag-legendary-text: #d97706;
-  --tag-legendary-border: #fde68a;
-  
-  --tag-main-bg: #eef2ff;
-  --tag-main-text: #6366f1;
-  --tag-main-border: #c7d2fe;
-  
-  --tag-side-bg: #ecfdf5;
-  --tag-side-text: #059669;
-  --tag-side-border: #a7f3d0;
-
-  /* 浅色网格背景图 */
-  --bg-image: linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  --bg-image: linear-gradient(rgba(42,184,176,0.04) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(42,184,176,0.04) 1px, transparent 1px);
 }
 
 [data-theme="dark"] {
-  /* 深色主题覆盖 */
-  --bg: #0f1117;
-  --surface: #1a1d2e;
-  --surface2: #23273e;
-  --surface3: #2d3250;
-  --border: rgba(255,255,255,0.05);
-  --border-bright: rgba(108,99,255,0.5);
-  --primary: #6c63ff;
-  --primary-glow: rgba(108,99,255,0.4);
-  --accent: #00d4aa;
-  --accent-glow: rgba(0,212,170,0.4);
-  --gold: #f59e0b;
-  --text: #e8eaf6;
-  --text-dim: #a0a4b8;
-  --text-muted: #6b7280;
-  
-  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-  --shadow-hover: 0 0 20px rgba(108, 99, 255, 0.3);
-  --shadow-focus: 0 0 0 3px rgba(108, 99, 255, 0.20);
-  
-  --nav-bg: rgba(26,29,46,0.85);
-  --common: #94a3b8;
-  --rare: #4ade80;
-  --epic: #c084fc;
-  --legendary: #fbbf24;
+  --bg:           #0a1f1f;
+  --surface:      #0f2a2a;
+  --surface2:     #143535;
+  --surface3:     #1a4040;
+  --border:       rgba(42,184,176,0.18);
+  --border-bright:rgba(42,184,176,0.45);
+  --primary:      #2ab8b0;
+  --primary-glow: rgba(42,184,176,0.25);
+  --accent:       #f0a500;
+  --accent-glow:  rgba(240,165,0,0.25);
+  --gold:         #f0a500;
+  --text:         #d4f0ee;
+  --text-dim:     #6ab8b4;
+  --text-muted:   #2a5555;
+  --shadow-sm:    0 4px 6px rgba(0,0,0,0.5);
+  --shadow:       0 4px 12px rgba(0,0,0,0.5);
+  --shadow-hover: 0 0 20px rgba(42,184,176,0.3);
+  --shadow-focus: 0 0 0 3px rgba(42,184,176,0.20);
+  --nav-bg:       rgba(10,31,31,0.88);
+  --common:       #94a3b8;
+  --rare:         #2ab8b0;
+  --epic:         #a855f7;
+  --legendary:    #f0a500;
 
-  /* Tag Types for Dark Mode */
-  --tag-common-bg: rgba(148,163,184,0.1);
-  --tag-common-text: #94a3b8;
+  --tag-common-bg:     rgba(148,163,184,0.1);
+  --tag-common-text:   #94a3b8;
   --tag-common-border: rgba(148,163,184,0.3);
+  --tag-rare-bg:       rgba(42,184,176,0.12);
+  --tag-rare-text:     #2ab8b0;
+  --tag-rare-border:   rgba(42,184,176,0.3);
+  --tag-epic-bg:       rgba(168,85,247,0.1);
+  --tag-epic-text:     #a855f7;
+  --tag-epic-border:   rgba(168,85,247,0.3);
+  --tag-legendary-bg:  rgba(240,165,0,0.1);
+  --tag-legendary-text:#f0a500;
+  --tag-legendary-border:rgba(240,165,0,0.3);
+  --tag-main-bg:       rgba(42,184,176,0.1);
+  --tag-main-text:     #2ab8b0;
+  --tag-main-border:   rgba(42,184,176,0.3);
+  --tag-side-bg:       rgba(240,165,0,0.1);
+  --tag-side-text:     #f0a500;
+  --tag-side-border:   rgba(240,165,0,0.3);
 
-  --tag-rare-bg: rgba(74,222,128,0.1);
-  --tag-rare-text: #4ade80;
-  --tag-rare-border: rgba(74,222,128,0.3);
-
-  --tag-epic-bg: rgba(192,132,252,0.1);
-  --tag-epic-text: #c084fc;
-  --tag-epic-border: rgba(192,132,252,0.3);
-
-  --tag-legendary-bg: rgba(251,191,36,0.1);
-  --tag-legendary-text: #fbbf24;
-  --tag-legendary-border: rgba(251,191,36,0.3);
-  
-  --tag-main-bg: rgba(108,99,255,0.1);
-  --tag-main-text: #6c63ff;
-  --tag-main-border: rgba(108,99,255,0.3);
-  
-  --tag-side-bg: rgba(0,212,170,0.1);
-  --tag-side-text: #00d4aa;
-  --tag-side-border: rgba(0,212,170,0.3);
-
-  /* 深色无纯网格，保留原纯色极简 */
   --bg-image: none;
 }
 

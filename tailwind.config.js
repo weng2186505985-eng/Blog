@@ -37,7 +37,7 @@ export default {
       },
       boxShadow: {
         'glow-primary': '0 0 10px var(--primary-glow)',
-        'glow-accent': '0 0 10px var(--accent-glow)',
+        'glow-accent':  '0 0 10px var(--accent-glow)',
         'card': 'var(--shadow)',
         'card-hover': 'var(--shadow-hover)',
       },

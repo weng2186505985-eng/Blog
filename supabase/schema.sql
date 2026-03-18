@@ -90,16 +90,20 @@ BEGIN
   new_level := GREATEST(1, FLOOR(SQRT(NEW.exp / 100.0)));
   
   -- Determine title based on level
-  IF new_level >= 50 THEN
-    new_title := '传说';
-  ELSIF new_level >= 30 THEN
-    new_title := '宗师';
-  ELSIF new_level >= 20 THEN
-    new_title := '大师';
-  ELSIF new_level >= 10 THEN
-    new_title := '术士';
+  IF new_level >= 51 THEN
+    new_title := '夏伍风屿岛主';
+  ELSIF new_level >= 41 THEN
+    new_title := '风屿守护者';
+  ELSIF new_level >= 31 THEN
+    new_title := '岛屿绘图师';
+  ELSIF new_level >= 21 THEN
+    new_title := '风帆航行者';
+  ELSIF new_level >= 11 THEN
+    new_title := '沙滩冒险家';
+  ELSIF new_level >= 6 THEN
+    new_title := '海湾探索者';
   ELSE
-    new_title := '学徒';
+    new_title := '初登岛岸';
   END IF;
 
   NEW.level := new_level;
