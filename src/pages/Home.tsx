@@ -1,26 +1,15 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { GameCard } from '../components/ui/GameCard';
 import { HexagonBadge } from '../components/ui/HexagonBadge';
 import { ExpBar } from '../components/ui/ExpBar';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { SlideAnim, ViewportAnim } from '../components/ui/Animations';
-import { motion } from 'framer-motion';
 import { supabase, type Profile, type Post, type Quest } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
-const statsData = [
-  { subject: '编程力', A: 90, fullMark: 100 },
-  { subject: '创造力', A: 85, fullMark: 100 },
-  { subject: '执行力', A: 80, fullMark: 100 },
-  { subject: '学习力', A: 95, fullMark: 100 },
-  { subject: '沟通力', A: 75, fullMark: 100 },
-  { subject: '自由度', A: 70, fullMark: 100 },
-];
+
 
 export function Home() {
-  const [isReady, setIsReady] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
   const [activeQuests, setActiveQuests] = useState<Quest[]>([]);
@@ -48,17 +37,7 @@ export function Home() {
     });
   }, []);
 
-  useEffect(() => {
-    const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
-          setIsReady(true);
-        }
-      }
-    });
-    if (containerRef.current) observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
+
 
   const totalExp = profile?.exp || 0;
   // Derived level from exp to ensure consistency with the formula L = floor(sqrt(EXP/100))
@@ -101,31 +80,7 @@ export function Home() {
           </GameCard>
         </SlideAnim>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
-        >
-          <GameCard>
-            <h3 className="font-serif text-lg mb-4 text-game-accent flex items-center gap-2 font-bold drop-shadow-[0_0_8px_var(--accent-glow)]">
-              <span className="w-1 h-4 bg-game-accent rounded-full inline-block"></span>
-              六维属性雷达
-            </h3>
-            <div ref={containerRef} className="h-[250px] w-full">
-              {isReady && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="70%" data={statsData}>
-                    <PolarGrid stroke="rgba(99,102,241,0.2)" strokeOpacity={1} />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-dim)', fontSize: 12 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                    <Radar name="Stats" dataKey="A" stroke="rgba(99,102,241,0.6)" fill="rgba(99,102,241,0.15)" fillOpacity={1} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              )}
-          </div>
-        </GameCard>
-        </motion.div>
+
       </div>
 
       {/* Right Column - Activities */}

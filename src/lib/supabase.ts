@@ -50,15 +50,6 @@ export type Quest = {
   end_date: string;
 };
 
-export type Skill = {
-  id: string;
-  name: string;
-  category: 'tech' | 'creative';
-  proficiency: number;
-  parent_id: string;
-  unlocked_at: string;
-};
-
 export type Achievement = {
   id: string;
   title: string;

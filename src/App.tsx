@@ -10,7 +10,6 @@ import { Home } from './pages/Home';
 import { BlogList } from './pages/BlogList';
 import { BlogDetail } from './pages/BlogDetail';
 import { Quests } from './pages/Quests';
-import { Skills } from './pages/Skills';
 import { Achievements } from './pages/Achievements';
 import { Login } from './pages/Login';
 
@@ -33,7 +32,6 @@ function App() {
               <Route path="blog" element={<BlogList />} />
               <Route path="blog/:id" element={<BlogDetail />} />
               <Route path="quests" element={<Quests />} />
-              <Route path="skills" element={<Skills />} />
               <Route path="achievements" element={<Achievements />} />
             </Route>
 

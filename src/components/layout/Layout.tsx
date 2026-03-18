@@ -1,5 +1,5 @@
 import { Outlet, NavLink, Link } from 'react-router-dom';
-import { User, ScrollText, Swords, Sparkles, Trophy, Sun, Moon, Menu, X, Settings } from 'lucide-react';
+import { User, ScrollText, Swords, Trophy, Sun, Moon, Menu, X, Settings } from 'lucide-react';
 import { WelcomeModal } from '../ui/WelcomeModal';
 import { useState, useEffect } from 'react';
 import { useScroll, useSpring, motion, AnimatePresence } from 'framer-motion';
@@ -65,7 +65,6 @@ export function Layout() {
     { path: '/', name: '首页', icon: <User size={18} /> },
     { path: '/blog', name: '日志', icon: <ScrollText size={18} /> },
     { path: '/quests', name: '任务', icon: <Swords size={18} /> },
-    { path: '/skills', name: '技能', icon: <Sparkles size={18} /> },
     { path: '/achievements', name: '成就', icon: <Trophy size={18} /> },
   ];
 
