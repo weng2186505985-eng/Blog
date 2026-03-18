@@ -43,7 +43,6 @@ export function Home() {
   // Derived level from exp to ensure consistency with the formula L = floor(sqrt(EXP/100))
   const level = Math.floor(Math.sqrt(totalExp / 100));
   const username = profile?.username || '';
-  const title = profile?.title || '';
   
   // Required EXP for level L: L^2 * 100
   const nextLevelMinExp = Math.pow(level + 1, 2) * 100;
@@ -62,21 +61,31 @@ export function Home() {
       {/* Left Column - Profile & Stats */}
       <div className="lg:col-span-1 space-y-6">
         <SlideAnim direction="left" delay={100}>
-          <GameCard className="flex flex-col items-center">
+          <GameCard className="flex flex-col items-center overflow-hidden relative">
             <div className="relative mb-4">
             <img
               src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${username}&backgroundColor=6366f1`}
               alt="Avatar"
-              className="w-24 h-24 rounded-full border-2 border-game-primary shadow-[0_0_0_4px_var(--primary-glow)] dark:shadow-[0_0_10px_var(--primary-glow)] bg-[var(--surface)]"
+              className="w-24 h-24 rounded-full border-2 border-game-primary shadow-[0_0_0_3px_rgba(42,184,176,0.2),0_0_0_6px_rgba(42,184,176,0.08),0_0_20px_rgba(42,184,176,0.15)] bg-[var(--surface)]"
             />
             <div className="absolute bottom-0 right-0">
               <HexagonBadge level={level} size="xs" />
             </div>
           </div>
           <h2 className="text-xl font-bold text-game-text">{username}</h2>
-          <p className="text-game-primary font-mono text-sm mb-4">职业：代码术士 / 称号：{title}</p>
+          <div className="flex items-center justify-center gap-3 mt-2 mb-1">
+            <span className="text-xs text-[var(--text-muted)]">🏝️ 夏伍风屿</span>
+            <span className="text-[var(--border-bright)]">·</span>
+            <span className="text-xs text-[var(--text-muted)]">🌊 守岛人</span>
+            <span className="text-[var(--border-bright)]">·</span>
+            <span className="text-xs text-[var(--text-muted)]">⚓ 独立开拓者</span>
+          </div>
 
+            <div className="w-full h-px my-3 bg-gradient-to-r from-transparent via-[var(--primary)] to-transparent opacity-30" />
             <ExpBar current={totalExp} max={nextLevelMinExp} label="EXP" />
+            <div className="absolute bottom-0 left-0 right-0 h-16 opacity-[0.04] pointer-events-none"
+              style={{background: 'radial-gradient(ellipse at 50% 100%, var(--primary) 0%, transparent 70%)'}}
+            />
           </GameCard>
         </SlideAnim>
 

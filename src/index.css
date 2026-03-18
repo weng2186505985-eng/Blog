@@ -49,8 +49,13 @@
   --tag-side-text:     #f0a500;
   --tag-side-border:   #fde68a;
 
-  --bg-image: linear-gradient(rgba(42,184,176,0.04) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(42,184,176,0.04) 1px, transparent 1px);
+  --bg-image:
+    radial-gradient(ellipse at 20% 50%, rgba(42,184,176,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(240,165,0,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(42,184,176,0.05) 0%, transparent 40%),
+    linear-gradient(rgba(42,184,176,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42,184,176,0.03) 1px, transparent 1px);
+  --bg-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px;
 }
 
 [data-theme="dark"] {
@@ -97,7 +102,10 @@
   --tag-side-text:     #f0a500;
   --tag-side-border:   rgba(240,165,0,0.3);
 
-  --bg-image: none;
+  --bg-image:
+    radial-gradient(ellipse at 20% 50%, rgba(42,184,176,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(240,165,0,0.05) 0%, transparent 50%),
+    none, none, none;
 }
 
 @layer base {
@@ -107,13 +115,35 @@
     background-color: var(--bg);
     color: var(--text);
     background-image: var(--bg-image);
-    background-size: 40px 40px;
+    background-size: var(--bg-size);
     background-position: center top;
   }
   
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif text-game-text;
   }
+}
+
+@keyframes wave {
+  0%, 100% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(-2%) scaleY(0.95); }
+}
+
+.wave-decoration {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60'%3E%3Cpath d='M0,30 C200,60 400,0 600,30 C800,60 1000,0 1200,30 L1200,60 L0,60 Z' fill='rgba(42,184,176,0.08)'/%3E%3C/svg%3E") repeat-x;
+  animation: wave 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.wave-decoration-2 {
+  animation-delay: -2s;
+  opacity: 0.6;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60'%3E%3Cpath d='M0,40 C150,10 350,50 600,20 C850,50 1050,10 1200,40 L1200,60 L0,60 Z' fill='rgba(240,165,0,0.06)'/%3E%3C/svg%3E") repeat-x;
 }
 
 @layer components {
@@ -134,6 +164,20 @@
     @apply translate-y-[-1px] duration-[80ms];
   }
 
+  .game-card::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C8 2 4 6 4 10c0 3 2 5 4 7l4 4 4-4c2-2 4-4 4-7 0-4-4-8-8-8z' fill='none' stroke='rgba(42,184,176,0.15)' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-game-primary to-game-accent;
   }
@@ -145,7 +189,7 @@
 }
 
 [data-theme="dark"] .exp-bar-fill {
-  box-shadow: 0 0 10px var(--primary-glow);
+  box-shadow: 0 0 10px rgba(42,184,176,0.4);
 }
 
 /* 任务面板高亮发光 */

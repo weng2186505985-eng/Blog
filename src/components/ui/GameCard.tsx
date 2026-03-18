@@ -24,6 +24,14 @@ export function GameCard({ children, className = '', rarity = 'common', onClick,
       className={`${baseStyle} ${hoverStyle} ${className} ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
+      {/* Decorative Rarity Top Border */}
+      {rarity !== 'common' && (
+        <div className={`absolute top-0 left-0 right-0 h-[2px] rounded-t-lg
+          ${rarity === 'rare' ? 'bg-gradient-to-r from-transparent via-[var(--primary)] to-transparent' : ''}
+          ${rarity === 'epic' ? 'bg-gradient-to-r from-transparent via-[#7c4daa] to-transparent' : ''}
+          ${rarity === 'legendary' ? 'bg-gradient-to-r from-transparent via-[var(--gold)] to-transparent opacity-80' : ''}
+        `} />
+      )}
       {/* Rarity ambient glow */}
       {rarity !== 'common' && (
         <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-20 pointer-events-none

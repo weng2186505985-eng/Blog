@@ -92,7 +92,7 @@ export function Layout() {
               </div>
               <div className="flex flex-col">
                 <span className="font-serif font-bold text-lg text-game-text leading-tight">{displayProfile.username}</span>
-                <span className="text-xs text-game-accent font-mono leading-tight">{displayProfile.title}</span>
+                <span className="text-xs text-game-accent font-mono leading-tight">🏝️ {displayProfile.title}</span>
               </div>
             </Link>
 
@@ -178,6 +178,7 @@ export function Layout() {
             style={{ width: `${(displayProfile.exp / displayProfile.nextLevelExp) * 100}%` }}
           />
         </div>
+        <div className="w-full h-[1px] bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,rgba(42,184,176,0.15)_4px,rgba(42,184,176,0.15)_8px)]" />
       </header>
 
       {/* Mobile Menu Drawer */}
@@ -248,7 +249,7 @@ export function Layout() {
       </footer>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 h-[60px] bg-[var(--surface)] backdrop-blur-md bg-opacity-80 border-t border-game-border z-50 md:hidden flex items-center justify-around px-2">
+      <nav className="fixed bottom-0 left-0 right-0 h-[60px] backdrop-blur-md bg-opacity-80 border-t border-[rgba(42,184,176,0.2)] bg-[rgba(240,249,248,0.92)] dark:bg-[rgba(10,31,31,0.92)] z-50 md:hidden flex items-center justify-around px-2">
         {navItems.slice(0, 4).map((item) => (
           <NavLink
             key={item.path}

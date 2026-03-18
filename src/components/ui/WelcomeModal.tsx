@@ -52,12 +52,15 @@ export function WelcomeModal() {
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onAnimationComplete={() => setShowContent(true)}
-              className="bg-[var(--surface)] w-full max-w-[480px] rounded-2xl shadow-2xl overflow-hidden pointer-events-auto border border-game-border"
+              className="bg-[var(--surface)] w-full max-w-[480px] rounded-2xl shadow-2xl overflow-hidden pointer-events-auto border border-game-border relative"
             >
               {/* Header Decoration */}
               <div className="h-2 w-full bg-gradient-to-r from-game-primary to-game-accent" />
               
               <div className="p-8">
+                <div className="text-center text-2xl mb-3 opacity-70">
+                  🌊 🏝️ ⛵ 🌺 🦋
+                </div>
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h2 className="text-2xl font-serif font-bold text-game-text mb-2">
@@ -103,6 +106,9 @@ export function WelcomeModal() {
                         className="h-full bg-gradient-to-r from-game-primary to-game-accent shadow-[0_0_8px_var(--primary-glow)]"
                       />
                     </div>
+                    <p className="text-xs text-[var(--text-muted)] text-center mt-2">
+                      海风轻拂，小岛正在生长 🌱
+                    </p>
                   </div>
 
                   <button
@@ -112,6 +118,11 @@ export function WelcomeModal() {
                     开始探索 <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Background Decoration */}
+              <div className="absolute bottom-0 right-0 text-6xl opacity-[0.06] pointer-events-none select-none leading-none">
+                🏝️
               </div>
             </motion.div>
           </div>
